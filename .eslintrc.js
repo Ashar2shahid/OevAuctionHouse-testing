@@ -1,21 +1,12 @@
 module.exports = {
-  extends: ['./node_modules/@api3/commons/dist/eslint/universal'],
+  env: {
+    es6: true,
+    mocha: true,
+    node: true,
+  },
   parserOptions: {
-    project: ['./tsconfig.json'],
+    ecmaVersion: 11,
+    sourceType: 'module',
   },
-  rules: {
-    camelcase: 'off',
-
-    'functional/no-try-statements': 'off',
-
-    'lodash/prefer-constant': 'off',
-
-    'unicorn/filename-case': 'off',
-    'unicorn/prefer-export-from': 'off',
-    'unicorn/prefer-object-from-entries': 'off',
-    'unicorn/prefer-ternary': 'off',
-
-    '@typescript-eslint/max-params': 'off',
-    '@typescript-eslint/no-unsafe-call': 'off',
-  },
+  extends: 'eslint:recommended',
 };

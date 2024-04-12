@@ -4,7 +4,6 @@ module.exports = {
   singleQuote: true,
   trailingComma: 'es5',
   useTabs: false,
-  plugins: ['prettier-plugin-solidity'],
   overrides: [
     {
       files: '*.md',
@@ -14,8 +13,20 @@ module.exports = {
     },
     {
       files: '*.sol',
+      excludeFiles: 'contracts/test/AccessControlRegistry.sol',
       options: {
-        parser: 'solidity-parse',
+        compiler: '0.8.18',
+        printWidth: 80,
+        tabWidth: 4,
+        useTabs: false,
+        singleQuote: false,
+        bracketSpacing: false,
+      },
+    },
+    {
+      files: 'contracts/test/AccessControlRegistry.sol',
+      options: {
+        compiler: '0.8.17',
         printWidth: 80,
         tabWidth: 4,
         useTabs: false,
