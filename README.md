@@ -255,6 +255,31 @@ Below are the important points to consider while implementing a contract that ca
   For example, a malicious actor that has access to it may call `initiateWithdrawal()` so that the auctioneer bots disregard the respective bids, or call `cancelWithdrawal()` whenever a withdrawal is initiated to prevent the funds from ever being withdrawn.
   Therefore, the said contract should only expose these functions to a trusted EOA or multisig, or in the case that it will expose them to untrusted parties in a restricted fashion, great care must be taken to make sure that doing so will not be abused.
 
+## Expected Contract Load and Usage
+
+- `deposit()`:
+    - used by: `SEARCHER`
+    - expected load: 1 request per min
+    - description: searchers will use this function to    deposit funds to the contract infrequently
+- `placeBid()`:
+    - used by: `SEARCHER`
+    - expected load: 30 request per sec
+    - description: searchers will use this function to place bids to the contract frequently. This function is expected to be called by a large number of searchers especially when there is an OEV opportunity.
+- `awardBid()`:
+    - used by: `AUCTIONEER`
+    - expected load: 20 request per min
+    - description: auctioneer bots will use this function to award bids to the searchers frequently. The fulfillment of this function call is critical for the searcher to extract the OEV and hence shouldn't be delayed or bottlenecked.
+- `reportFulfillment()`:
+    - used by: `SEARCHER`
+    - expected load: 10 request per min
+    - description: searchers will use this function to report the fulfillment of the OEV transaction. This function is expected to be called frequently.
+- `confirmFulfillment()`:
+    - used by: `AUCTIONEER`
+    - expected load: 10 request per min
+    - description: auctioneer bots will use this function to confirm the fulfillment of the OEV transaction. This function is expected to be called frequently.
+  
+
+
 ## Example conventions for `bidDetails`, `awardDetails` and `fulfillmentReport`
 
 Below are example conventions for `bidDetails`, `awardDetails` and `fulfillmentReport`.
@@ -344,44 +369,4 @@ Although these data feeds can be read by calling Api3ServerV1 directly, the user
 ### [IProxy](https://github.com/api3dao/airnode-protocol-v1/blob/main/contracts/api3-server-v1/proxies/interfaces/IProxy.sol)
 
 The interface of a generic proxy contract that API3 users are recommended to use to read a specific data feed.
-
-
-## Expected Contract Load and Usage
-
-The OevAuctionHouse contract is expected to be used by a large number of searchers and a small number of auctioneer bots.
-
-
-- The searcher deposits funds to the OevAuctionHouse contract to be used as collateral and protocol fee payment by calling `deposit()`
-- The searcher places a bid by calling `placeBid()` and starts listening for awards
-- An auctioneer bot periodically receives candidate OEV updates that can be awarded to bidders.
-  For one of these, it goes through all active bids and determines that the highest bid is the one mentioned above.
-  The auctioneer bot awards the update to the searcher by calling `awardBid()`, which also locks up respective collateral and protocol fee amounts from the searcher deposit until the fulfillment is confirmed by an auctioneer bot.
-- The searcher detects the update awarded to them, and utilizing the data in `awardDetails` from `AwardedBid`, they send a transaction on another chain that pays the bid amount and extracts the OEV.
-- Once the transaction above is confirmed, the searcher reports the fulfillment by calling `reportFulfillment()`, providing the transaction hash in `fulfillmentDetails`.
-  The searcher has a single shot to report the fulfillment correctly, and thus should only attempt to do so once the fulfillment has reached adequate finality.
-- An auctioneer bot detects the fulfillment report, checks the respective chain to confirm that the transaction hash being reported is associated with the respective OEV update being executed, and confirms the fulfillment by calling `confirmFulfillment()`, which also releases the locked up collateral and charges the protocol fee.
-  The auctioneer cannot contradict a fulfillment that it has previously confirmed, and thus should only confirm it once it has reached adequate finality (which may not be the case if the searcher has reported the fulfillment prematurely).
-
-- `deposit()`:
-    - used by: `SEARCHER`
-    - expected load: 1 request per min
-    - description: searchers will use this function to    deposit funds to the contract infrequently
-- `placeBid()`:
-    - used by: `SEARCHER`
-    - expected load: 30 request per sec
-    - description: searchers will use this function to place bids to the contract frequently. This function is expected to be called by a large number of searchers especially when there is an OEV opportunity.
-- `awardBid()`:
-    - used by: `AUCTIONEER`
-    - expected load: 20 request per min
-    - description: auctioneer bots will use this function to award bids to the searchers frequently. The fulfillment of this function call is critical for the searcher to extract the OEV and hence shouldn't be delayed or bottlenecked.
-- `reportFulfillment()`:
-    - used by: `SEARCHER`
-    - expected load: 10 request per min
-    - description: searchers will use this function to report the fulfillment of the OEV transaction. This function is expected to be called frequently.
-- `confirmFulfillment()`:
-    - used by: `AUCTIONEER`
-    - expected load: 10 request per min
-    - description: auctioneer bots will use this function to confirm the fulfillment of the OEV transaction. This function is expected to be called frequently.
-  
-
 
