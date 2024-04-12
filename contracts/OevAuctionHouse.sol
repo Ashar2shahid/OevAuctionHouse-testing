@@ -803,6 +803,9 @@ contract OevAuctionHouse is
         override
         returns (uint104 collateralAmount, uint104 protocolFeeAmount)
     {
+        if (collateralInBasisPoints == 0 && protocolFeeInBasisPoints == 0) {
+            return (0, 0);
+        }
         (int224 collateralRateValue, uint32 collateralRateTimestamp) = IProxy(
             collateralRateProxy
         ).read();
